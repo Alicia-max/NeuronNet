@@ -86,6 +86,7 @@ void Network::print_params(std::ostream *_out) {
     }
 }
 
+
 void Network::print_head(const std::map<std::string, size_t> &_nt, 
                          std::ostream *_out) {
     size_t total = 0;
@@ -128,3 +129,90 @@ void Network::print_traj(const int time, const std::map<std::string, size_t> &_n
             }
     (*_out) << std::endl;
 }
+
+
+ std::pair<size_t, double> Network ::  degree(const size_t& n) const {
+	 
+	 std::pair <size_t, double> tmp; 
+	 double s(0); 
+	 
+     std::vector<std::pair<size_t, double> > voisins(neighbors(n)); 
+     for(auto const& n : voisins) {s+=n.second; }
+		  
+		  tmp.first=voisins.size(); 
+		  tmp.second = s; 
+		  return tmp; 
+ }
+std::vector<std::pair<size_t, double> > Network ::  neighbors(const size_t& n) const{
+	
+	std::vector<std::pair<size_t, double> > tmp3; 
+	linkmap::const_iterator it = links.lower_bound({n, 0}); 
+	linkmap::const_iterator itmax = links.lower_bound({n+1, 0}); 
+	
+	
+	for (; it->first != itmax->first; it++){
+             std::pair <size_t, double> p(it->first.second, it->second); 
+			 tmp3.push_back(p); 
+ 
+		 }
+		 
+		 return tmp3; 
+	 }
+	 
+	 
+std::set<size_t> Network:: step(const std::vector<double>& in){
+	
+	std::vector<std::pair<  size_t, double> >  voisins;
+	std::set <size_t> firing_neuron;
+
+	for(size_t i(0); i<neurons.size(); i++){
+		
+		if(neurons[i].firing()){ firing_neuron.insert(i);  neurons[i].reset(); } 
+}
+
+
+		if(in.size()==neurons.size()){
+			
+			std::vector <double> input;
+			
+			
+			 for(size_t i(0); i<neurons.size(); i++){
+			  
+			  double tal (in[i]); 
+			
+				if(neurons[i].is_inhibitory()) tal=0.4*tal; 
+				input.push_back(tal); 
+
+				voisins=neighbors(i); 
+				
+				double somme_inhi (0); 		
+				double somme_exi (0); 
+				
+				
+				for(auto const& voisin: voisins){
+					
+					if(neurons[voisin.first].firing()){
+						
+						if(neurons[voisin.first].is_inhibitory()){ somme_inhi += voisin.second;} 
+						somme_exi += voisin.second; 
+						}
+					
+					}
+					input[i]+=(0.5*somme_exi-somme_inhi); 
+				}
+				
+	
+			for(size_t i(0); i<neurons.size(); i++){	
+				neurons[i].input(input[i]); 
+				neurons[i].step();
+		     }
+		 }
+		     
+		     return firing_neuron; 
+		 }
+		
+		
+		
+		
+	
+
